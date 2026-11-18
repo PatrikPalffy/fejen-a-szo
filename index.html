@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fejen a szó">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2a1a6e">
+<style>:root{color-scheme:dark}html,body{margin:0}</style>
+<title>Fejen a szó</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Layout: bright party-game look. Violet ground with floating shapes, chunky tilted category cards, full-colour play screen that turns sideways in portrait. */
+:root {
+  --bg: #2a1a6e;
+  --bg2: #4b1fa8;
+  --ink: #ffffff;
+  --muted: #cfc4f5;
+  --yellow: #ffd83f;
+  --pink: #ff5ca8;
+  --cyan: #22cfee;
+  --green: #34d96a;
+  --red: #ff5468;
+  --dark: #1a1040;
+  --display: "Fredoka", "Baloo 2", "Avenir Next Rounded", "Arial Rounded MT Bold", "Helvetica Neue", Arial, sans-serif;
+  --body: "Nunito", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+html { background: var(--bg); }
+body {
+  background: radial-gradient(120% 60% at 50% 0%, var(--bg2) 0%, var(--bg) 70%), var(--bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--body); font-weight: 600; font-size: 16px;
+  padding-block: 18px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; border: 0; cursor: pointer; touch-action: manipulation; }
+button:focus-visible { outline: 4px solid var(--yellow); outline-offset: 3px; }
+.wrap { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+/* Floating background shapes */
+.decor { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.decor i { position: absolute; display: block; opacity: .5; }
+.decor .c1 { width: 120px; height: 120px; border-radius: 50%; background: var(--pink); top: 6%; left: -40px; opacity: .22; }
+.decor .c2 { width: 180px; height: 180px; border-radius: 50%; background: var(--cyan); top: 38%; right: -70px; opacity: .18; }
+.decor .c3 { width: 90px; height: 90px; border-radius: 50%; background: var(--yellow); bottom: 8%; left: 12%; opacity: .16; }
+.decor .s1, .decor .s2, .decor .s3 { width: 28px; height: 28px; background: var(--yellow); clip-path: polygon(50% 0, 61% 36%, 98% 38%, 68% 60%, 79% 96%, 50% 74%, 21% 96%, 32% 60%, 2% 38%, 39% 36%); }
+.decor .s1 { top: 16%; right: 10%; animation: tw 3s ease-in-out infinite; }
+.decor .s2 { top: 56%; left: 6%; width: 20px; height: 20px; background: var(--cyan); animation: tw 4s ease-in-out infinite .6s; }
+.decor .s3 { bottom: 14%; right: 14%; background: var(--pink); width: 22px; height: 22px; animation: tw 3.5s ease-in-out infinite 1.2s; }
+@keyframes tw { 0%,100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.35) rotate(18deg); } }
+
+/* Home header */
+.hero { display: flex; align-items: center; gap: 12px; }
+.hero svg { width: 132px; height: auto; flex: none; filter: drop-shadow(0 6px 0 rgba(0,0,0,.25)); }
+.title { font-family: var(--display); font-weight: 700; font-size: clamp(2.5rem, 12vw, 3.6rem); line-height: .95; margin: 0; letter-spacing: -.01em; text-shadow: 0 5px 0 rgba(0,0,0,.28); }
+.title span { display: inline-block; }
+.title .t0 { color: var(--yellow); transform: rotate(-4deg); }
+.title .t1 { color: var(--pink); transform: rotate(3deg); }
+.title .t2 { color: var(--cyan); transform: rotate(-3deg); }
+.title .t3 { color: var(--green); transform: rotate(4deg); }
+.title .t4 { color: #ffa51f; transform: rotate(-2deg); }
+.title .sp { width: .28em; }
+.lead { color: var(--muted); margin: 10px 0 0; line-height: 1.4; font-weight: 700; }
+.label { font-family: var(--display); font-size: 1.05rem; font-weight: 600; margin: 0 0 10px; color: var(--yellow); text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+
+.chips { display: flex; gap: 10px; }
+.chip { flex: 1; font-family: var(--display); font-weight: 700; font-size: 1.15rem; padding: 12px 8px; border-radius: 16px; min-height: 52px; background: rgba(255,255,255,.14); box-shadow: 0 5px 0 rgba(0,0,0,.25); transition: transform .1s; }
+.chip:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.chip[aria-pressed="true"] { background: var(--yellow); color: var(--dark); }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; padding: 4px 2px; }
+.tile {
+  --c1: #888; --c2: #555; --tk: #fff;
+  background: linear-gradient(150deg, var(--c1), var(--c2));
+  color: var(--tk);
+  border-radius: 24px; padding: 14px; text-align: left; min-height: 136px;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  box-shadow: 0 7px 0 rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.35);
+  position: relative; overflow: hidden;
+  transition: transform .12s ease, box-shadow .12s;
+}
+.tile:nth-child(4n+2), .tile:nth-child(4n+3) { transform: rotate(1.6deg); }
+.tile:nth-child(4n), .tile:nth-child(4n+1) { transform: rotate(-1.6deg); }
+.tile:active { transform: translateY(4px) scale(.98); box-shadow: 0 3px 0 rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.35); }
+.tile::after { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,.14); right: -26px; top: -26px; }
+.tile .ico { width: 52px; height: 52px; border-radius: 16px; background: rgba(255,255,255,.26); display: grid; place-items: center; position: relative; z-index: 1; }
+.tile .ico svg { width: 32px; height: 32px; }
+.tile .name { font-family: var(--display); font-weight: 700; font-size: 1.3rem; line-height: 1.05; overflow-wrap: anywhere; text-shadow: 0 2px 0 rgba(0,0,0,.18); position: relative; z-index: 1; }
+.tile.dk .name { text-shadow: none; }
+.tile .count { font-size: .82rem; font-weight: 800; opacity: .85; position: relative; z-index: 1; }
+.tile.all { grid-column: 1 / -1; min-height: 96px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; transform: rotate(-.8deg); background: linear-gradient(100deg, #ff5468, #ffa51f 20%, #ffd83f 38%, #34d96a 55%, #22cfee 72%, #8f7bff 88%, #ff5ca8); }
+.tile.all .txt { display: flex; flex-direction: column; gap: 2px; position: relative; z-index: 1; }
+.tile.all .name { font-size: 1.5rem; }
+.hint { color: var(--muted); font-size: .88rem; line-height: 1.45; margin: 0; }
+
+/* Play stage */
+.rot {
+  --c1: #5b86ff; --c2: #2f50e0; --tk: #fff;
+  position: fixed; inset: 0; z-index: 50; container-type: size;
+  background: linear-gradient(160deg, var(--c1), var(--c2)); color: var(--tk);
+  display: grid; place-items: center; text-align: center; box-sizing: border-box; overflow: hidden;
+  padding-inline: max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  user-select: none; -webkit-user-select: none;
+}
+@media (orientation: portrait) {
+  .rot {
+    inset: auto; top: 0; left: 0;
+    width: 100vh; height: 100vw;
+    width: 100dvh; height: 100dvw;
+    transform-origin: 0 0;
+    transform: translateX(100vw) rotate(90deg);
+    transform: translateX(100dvw) rotate(90deg);
+    padding-inline: max(env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px));
+  }
+}
+.rot[hidden] { display: none !important; }
+.bgicon { position: absolute; right: -6cqh; bottom: -14cqh; width: 90cqh; height: 90cqh; opacity: .14; pointer-events: none; }
+.bgicon svg { width: 100%; height: 100%; }
+.bgdots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.12) 2px, transparent 2.5px); background-size: 26px 26px; pointer-events: none; }
+.word {
+  font-family: var(--display); font-weight: 700; letter-spacing: -.01em; line-height: 1.02;
+  font-size: clamp(2.4rem, 27cqh, 9rem); padding: 0 8cqw; text-wrap: balance; overflow-wrap: anywhere;
+  text-shadow: 0 .06em 0 rgba(0,0,0,.25);
+  animation: pop .22s ease-out;
+}
+.word.long { font-size: clamp(2rem, 18cqh, 6rem); }
+.word.xlong { font-size: clamp(1.8rem, 12.5cqh, 4.5rem); }
+@keyframes pop { from { transform: scale(.82); opacity: .2; } to { transform: scale(1); opacity: 1; } }
+.hud { position: absolute; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 3cqh 4cqw; z-index: 4; pointer-events: none; }
+.hud .quit { pointer-events: auto; justify-self: start; background: rgba(0,0,0,.26); width: 48px; height: 48px; border-radius: 50%; font-size: 1.15rem; font-weight: 800; }
+.hudmid { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.time { font-family: var(--display); font-weight: 700; font-size: clamp(1.6rem, 12cqh, 3.6rem); font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 .05em 0 rgba(0,0,0,.25); }
+.time.warn { color: var(--yellow); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.12); } }
+.catname { font-size: clamp(.8rem, 4.4cqh, 1.2rem); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .85; }
+.score { justify-self: end; font-family: var(--display); font-weight: 700; font-size: clamp(1.2rem, 8cqh, 2.2rem); background: rgba(0,0,0,.26); border-radius: 999px; padding: .1em .6em; font-variant-numeric: tabular-nums; }
+.zones { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; z-index: 2; }
+.zone { background: transparent; display: flex; align-items: flex-end; padding: 0 4cqw 3.5cqh; font-family: var(--display); font-weight: 700; font-size: clamp(1rem, 5.4cqh, 1.6rem); letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.zone.pass { justify-content: flex-start; }
+.zone.good { justify-content: flex-end; }
+.center-msg { position: relative; z-index: 3; pointer-events: none; width: 100%; text-align: center; }
+.big-count { font-family: var(--display); font-weight: 700; font-size: clamp(5rem, 56cqh, 14rem); line-height: 1; color: var(--yellow); text-shadow: 0 .05em 0 rgba(0,0,0,.28); animation: pop .35s ease-out; }
+.sub { margin-top: 2cqh; font-family: var(--display); font-weight: 600; font-size: clamp(1.1rem, 7cqh, 2.2rem); text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.flash { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: clamp(3rem, 30cqh, 9rem); text-transform: uppercase; color: #fff; text-shadow: 0 .06em 0 rgba(0,0,0,.28); pointer-events: none; animation: pop .2s ease-out; }
+.flash[hidden] { display: none; }
+.flash.ok { background: #1fb85a; }
+.flash.skip { background: #ff4d5e; }
+
+/* Results */
+.res-head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.res-title { font-family: var(--display); font-weight: 700; font-size: clamp(1.8rem, 9vw, 2.4rem); margin: 0; color: var(--pink); text-shadow: 0 4px 0 rgba(0,0,0,.28); }
+.score-big { font-family: var(--display); font-weight: 700; font-size: clamp(6rem, 34vw, 9rem); line-height: .95; color: var(--yellow); margin: 0; text-shadow: 0 .05em 0 rgba(0,0,0,.28); }
+.row { display: flex; gap: 12px; }
+.btn { flex: 1; font-family: var(--display); font-weight: 700; font-size: 1.2rem; background: var(--yellow); color: var(--dark); padding: 16px; border-radius: 18px; min-height: 56px; box-shadow: 0 6px 0 rgba(0,0,0,.28); transition: transform .1s; }
+.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.28); }
+.btn.ghost { background: rgba(255,255,255,.16); color: var(--ink); }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.list { background: rgba(255,255,255,.1); border-radius: 20px; padding: 14px 16px; min-width: 0; box-shadow: inset 0 3px 0 rgba(255,255,255,.12); }
+.list h3 { margin: 0 0 8px; font-family: var(--display); font-size: 1.05rem; }
+.list.ok h3 { color: #5cf29b; }
+.list.skip h3 { color: #ff8f9b; }
+.list ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.list li { overflow-wrap: anywhere; line-height: 1.25; font-weight: 800; }
+.empty { color: var(--muted); font-weight: 600; }
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 60; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .decor i, .time.warn, .word, .big-count, .flash { animation: none; } .tile, .chip, .btn { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="decor" aria-hidden="true"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="s1"></i><i class="s2"></i><i class="s3"></i></div>
+
+<div class="wrap" id="home">
+  <header>
+    <div class="hero">
+      <svg viewBox="0 0 160 150" aria-hidden="true">
+        <g transform="rotate(-9 80 36)">
+          <rect x="40" y="6" width="80" height="46" rx="10" fill="#fff" stroke="#1a1040" stroke-width="4"/>
+          <text x="80" y="42" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="34" fill="#ff5ca8">?</text>
+        </g>
+        <circle cx="80" cy="96" r="44" fill="#ffd83f" stroke="#1a1040" stroke-width="4"/>
+        <circle cx="64" cy="94" r="5" fill="#1a1040"/><circle cx="96" cy="94" r="5" fill="#1a1040"/>
+        <path d="M60 112 Q80 132 100 112" fill="none" stroke="#1a1040" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="52" cy="108" r="6" fill="#ff8f9b" opacity=".7"/><circle cx="108" cy="108" r="6" fill="#ff8f9b" opacity=".7"/>
+        <path d="M18 40l4 9 9 4-9 4-4 9-4-9-9-4 9-4z" fill="#22cfee"/>
+        <path d="M142 70l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#ff5ca8"/>
+      </svg>
+      <h1 class="title" id="ttl" aria-label="Fejen a szó"></h1>
+    </div>
+    <p class="lead">Tartsd a telefont a homlokodhoz, a többiek mutogatják a szót, te kitalálod!</p>
+  </header>
+  <section aria-labelledby="t-time">
+    <p class="label" id="t-time">Mennyi idő legyen?</p>
+    <div class="chips" id="times"></div>
+  </section>
+  <section aria-labelledby="t-tilt" id="tilt-sec" hidden>
+    <p class="label" id="t-tilt">Dőlés (a telefon mozgásérzékelőjével)</p>
+    <div class="chips" id="tilts"></div>
+  </section>
+  <section aria-labelledby="t-cat">
+    <p class="label" id="t-cat">Válassz kategóriát</p>
+    <div class="grid" id="cats"></div>
+  </section>
+  <p class="hint">Játék közben a telefont a homlokodhoz tartva döntsd le (Helyes) vagy fel (Passz), de a képernyő jobb oldalára koppintva is „Helyes”, a bal oldalira „Passz”. Ha az álló tájolás zárolva van, a kártya magától elfordul, ilyenkor fektetve fogd a telefont.</p>
+</div>
+
+<div class="wrap" id="results" hidden>
+  <header class="res-head">
+    <p class="label" id="r-cat"></p>
+    <h2 class="res-title" id="r-title"></h2>
+    <p class="score-big" id="r-score">0</p>
+    <p class="lead" id="r-sub"></p>
+  </header>
+  <div class="cols">
+    <div class="list ok"><h3>Helyes</h3><ul id="r-ok"></ul></div>
+    <div class="list skip"><h3>Passz</h3><ul id="r-skip"></ul></div>
+  </div>
+  <div class="row">
+    <button class="btn ghost" id="r-home" type="button">Kategóriák</button>
+    <button class="btn" id="r-again" type="button">Újra</button>
+  </div>
+</div>
+
+<div class="rot" id="stage" hidden>
+  <div class="bgdots"></div>
+  <div class="bgicon" id="bgicon"></div>
+  <div class="hud">
+    <button class="quit" id="quit" type="button" aria-label="Kilépés">✕</button>
+    <div class="hudmid"><div class="time" id="time">60</div><div class="catname" id="catname"></div></div>
+    <div class="score" id="score">0</div>
+  </div>
+  <div class="zones" id="zones">
+    <button class="zone pass" id="pass" type="button">◀ Passz</button>
+    <button class="zone good" id="good" type="button">Helyes ▶</button>
+  </div>
+  <div class="center-msg" id="center"></div>
+  <div class="flash" id="flash" hidden></div>
+</div>
+<canvas id="confetti" hidden></canvas>
+
+<script>
+(function () {
+  var ICON = {
+    paw: '<circle cx="6.5" cy="10" r="2.1"/><circle cx="10.5" cy="6" r="2.1"/><circle cx="15.5" cy="6" r="2.1"/><circle cx="19" cy="10" r="2.1"/><path d="M12.8 11c-3.2 0-6 3-6 5.4 0 1.8 1.5 2.5 3.2 2.2 1-.2 1.8-.6 2.8-.6s1.8.4 2.8.6c1.7.3 3.2-.4 3.2-2.2 0-2.4-2.8-5.4-6-5.4z"/>',
+    brief: '<path d="M4 8h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="12.5" width="18" height="2" fill="rgba(0,0,0,.25)"/>',
+    bowl: '<path d="M2.5 11h19a9.5 9.5 0 0 1-19 0z"/><path d="M8 3.5c0 1.6 1.6 1.8 1.6 3.4M12 3c0 1.6 1.6 1.8 1.6 3.4M16 3.5c0 1.6 1.6 1.8 1.6 3.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+    pin: '<path d="M12 22s7.5-6.5 7.5-12.5a7.5 7.5 0 1 0-15 0C4.5 15.5 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.8" fill="rgba(0,0,0,.3)"/>',
+    star: '<path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/>',
+    film: '<rect x="3" y="9.5" width="18" height="11" rx="2"/><path d="M3.3 8.2l-.7-3.4 17.6-2.8.7 3.4z"/><path d="M8 4.4l2 3.4M13 3.6l2 3.4" stroke="rgba(0,0,0,.35)" stroke-width="1.6"/>',
+    ball: '<circle cx="12" cy="12" r="9.5"/><path d="M12 2.5v19M2.5 12h19M5.2 5.2c3.2 2.8 3.2 10.8 0 13.6M18.8 5.2c-3.2 2.8-3.2 10.8 0 13.6" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>',
+    bulb: '<path d="M12 2.5a6.5 6.5 0 0 0-3.8 11.8c.7.6 1.1 1.3 1.1 2.2h5.4c0-.9.4-1.6 1.1-2.2A6.5 6.5 0 0 0 12 2.5z"/><rect x="9.3" y="18" width="5.4" height="1.9" rx=".9"/><rect x="10.3" y="20.6" width="3.4" height="1.6" rx=".8"/>',
+    mask: '<circle cx="12" cy="12" r="9.5"/><circle cx="8.6" cy="10" r="1.8" fill="rgba(0,0,0,.4)"/><circle cx="15.4" cy="10" r="1.8" fill="rgba(0,0,0,.4)"/><path d="M7.5 14.5c1 3.2 8 3.2 9 0z" fill="rgba(0,0,0,.4)"/>',
+    crown: '<path d="M3 19l1.8-11 5 5L12 5l2.2 8 5-5L21 19z"/><rect x="3" y="19.5" width="18" height="2.2" rx="1"/>',
+    spark: '<path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/>'
+  };
+  function icon(k) { return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + ICON[k] + '</svg>'; }
+
+  var CATS = [
+    { id: "allatok", name: "Állatok", ic: "paw", c1: "#34d96a", c2: "#16a34a", tk: "#fff", words: ["elefánt","zsiráf","pingvin","kenguru","delfin","cápa","pók","béka","teve","szarvas","farkas","medve","sün","mókus","denevér","krokodil","majom","papagáj","bagoly","kígyó","hangya","méh","csiga","pillangó","galamb","nyuszi","gepárd","víziló","orrszarvú","polip","oroszlán","tigris","leopárd","puma","hiéna","sakál","róka","borz","vidra","hód","mosómedve","görény","menyét","vaddisznó","őz","dámszarvas","muflon","zerge","szamár","ló","póni","tehén","bika","bárány","kecske","disznó","csirke","kakas","liba","kacsa","pulyka","hattyú","gólya","daru","flamingó","pelikán","sas","sólyom","keselyű","varjú","holló","harkály","cinege","rigó","fecske","veréb","kolibri","strucc","páva","fácán","kutya","macska","hörcsög","tengerimalac","patkány","egér","csincsilla","teknős","gekkó","kaméleon","iguána","gyík","aligátor","medúza","rák","homár","tintahal","csikóhal","angolna","harcsa","ponty","csuka","pisztráng","lazac","bálna","fóka","rozmár","jegesmedve","panda","koala","lajhár","zebra","jak","bölény","antilop","gnú","dromedár","láma","alpaka","szöcske","tücsök","katicabogár","szitakötő","szúnyog","légy","darázs","hernyó","giliszta","skorpió","tarantula","bolha","vombat","ürge","nyérc","dingó","hangyászsün","kobra","piton","kolibri","kormorán","pacsirta","vadgalamb","túzok"] },
+    { id: "foglalkozasok", name: "Foglalkozások", ic: "brief", c1: "#ffa51f", c2: "#f26a00", tk: "#fff", words: ["pék","tűzoltó","fodrász","pilóta","kőműves","szakács","postás","rendőr","orvos","ápoló","tanár","villanyszerelő","vízvezeték-szerelő","fogorvos","nyomozó","űrhajós","buszsofőr","hentes","virágárus","állatorvos","bíró","könyvelő","énekes","festő","kalauz","pincér","cukrász","programozó","taxisofőr","bohóc","ügyvéd","ügyész","közgazdász","bankár","pénztáros","eladó","recepciós","titkárnő","igazgató","mérnök","építész","grafikus","fotós","operatőr","rendező","színész","író","költő","újságíró","riporter","műsorvezető","zenész","karmester","zongorista","dobos","táncos","koreográfus","kozmetikus","masszőr","gyógytornász","gyógyszerész","szemész","sebész","mentős","védőnő","bába","pszichológus","vegyész","fizikus","csillagász","régész","történész","könyvtáros","biztonsági őr","börtönőr","katona","tengerész","kapitány","matróz","mozdonyvezető","futár","szemetes","takarító","portás","kertész","gazda","juhász","halász","vadász","erdész","favágó","asztalos","ács","lakatos","hegesztő","cipész","szabó","mészáros","borász","pultos","barista","artista","zsonglőr","bűvész","kötéltáncos","kamionos","edző","játékvezető","szobrász","restaurátor","aranyműves","órás","borbély","tetováló","kéményseprő","légiutas-kísérő","légiforgalmi irányító","influenszer","tolmács","fordító","szerkesztő","korrektor","bányász","hajóskapitány","kocsis","kovács","kosárfonó","fazekas","üveges","tapétázó","szobafestő","parkoló őr","díszlettervező","súgó","statiszta","kaszkadőr","dublőr"] },
+    { id: "etelek", name: "Ételek és italok", ic: "bowl", c1: "#ff5468", c2: "#d61f3c", tk: "#fff", words: ["gulyásleves","lángos","pogácsa","palacsinta","kürtőskalács","töltött káposzta","rántott hús","halászlé","túrós csusza","dobostorta","pörkölt","főzelék","Unicum","pálinka","kakaós csiga","lecsó","paprikás krumpli","somlói galuska","bejgli","Túró Rudi","rakott krumpli","madártej","kocsonya","fasírt","nokedli","pizza","hamburger","fagylalt","forralt bor","kolbász","hurka","sajtos tallér","uborkasaláta","savanyú káposzta","rétes","almás rétes","mákos guba","flódni","Gundel palacsinta","Rigó Jancsi","Eszterházy torta","krémes","képviselőfánk","mogyorós kifli","linzer","kifli","zsemle","kovászos uborka","tökfőzelék","húsleves","gyümölcsleves","meggyleves","bableves","korhelyleves","krumplileves","paradicsomleves","gombaleves","spagetti","lasagne","rizottó","sushi","taco","gyros","kebab","hot dog","wrap","sült krumpli","chips","pattogatott kukorica","csokoládé","cukorka","nyalóka","gumicukor","vattacukor","muffin","fánk","pite","keksz","kakaó","forró csoki","tea","kávé","cappuccino","limonádé","szóda","kóla","gyümölcslé","sör","fröccs","pezsgő","koktél","Tokaji aszú","egri bikavér","Pick szalámi","téliszalámi","szalonna","tepertő","zsíros kenyér","lekváros bukta","hájas kifli","grízes tészta","rizsfelfújt","lencsefőzelék","sóska","spenót","brokkoli","karfiol","padlizsán","cukkini","paprika","paradicsom","retek","hagyma","fokhagyma","krumpli","görögdinnye","sárgadinnye","eper","málna","szeder","meggy","cseresznye","barack","szilva","körte","alma","banán","narancs","citrom","ananász","szőlő","mogyoró","dió","mandula","mézeskalács","méz","lekvár","nutella","joghurt","túró","tejföl","vaj","sajt","tojásrántotta","rántotta","tükörtojás"] },
+    { id: "helyek", name: "Magyar helyek", ic: "pin", c1: "#22cfee", c2: "#0a93d6", tk: "#fff", words: ["Balaton","Budapest","Hortobágy","Lánchíd","Parlament","Halászbástya","Hősök tere","Szentendre","Eger","Tokaj","Pécs","Debrecen","Szeged","Visegrád","Esztergom","Hévíz","Tihany","Gellért-hegy","Margitsziget","Mátra","Tisza","Duna","Hollókő","Pannonhalma","Siófok","Győr","Sopron","Kecskemét","Szombathely","Velencei-tó","Miskolc","Nyíregyháza","Székesfehérvár","Veszprém","Zalaegerszeg","Kaposvár","Szolnok","Békéscsaba","Salgótarján","Tatabánya","Dunaújváros","Gyula","Hajdúszoboszló","Balatonfüred","Keszthely","Badacsony","Szigliget","Sümeg","Kőszeg","Fertő-tó","Tisza-tó","Kiskunság","Bükk","Zemplén","Aggteleki-cseppkőbarlang","Szilvásvárad","Lillafüred","Diósgyőr","Sárospatak","Mohács","Siklós","Harkány","Villány","Szekszárd","Kalocsa","Baja","Ópusztaszer","Orfű","Őrség","Vajdahunyad vára","Szent István-bazilika","Mátyás-templom","Szabadság híd","Erzsébet híd","Széchenyi fürdő","Gellért fürdő","Budai vár","Citadella","Andrássy út","Váci utca","Nagycsarnok","Operaház","Keleti pályaudvar","Nyugati pályaudvar","Ferihegy","Városliget","Állatkert","Nemzeti Múzeum","Szépművészeti Múzeum","Deák tér","Blaha Lujza tér","Oktogon","Rózsadomb","Normafa","Pilis","Börzsöny","Gödöllő","Skanzen","Tapolca","Kolozsvár","Marosvásárhely","Székelyudvarhely","Pozsony","Komárom","Kassa","Szabadka","Újvidék","Mecsek","Bakony","Zselic","Tokaji borvidék","Etyek","Szentgotthárd","Fertőd","Esterházy-kastély","Festetics-kastély","Egri vár","Kőszegi vár","Sümegi vár","Gyulai vár","Debreceni Nagytemplom","Kiskunsági Nemzeti Park","Bugac","Tiszafüred","Poroszló","Tihanyi apátság"] },
+    { id: "magyarok", name: "Híres magyarok", ic: "star", c1: "#c25cff", c2: "#8a2bf0", tk: "#fff", words: ["Puskás Ferenc","Semmelweis Ignác","Rubik Ernő","Petőfi Sándor","Szent István","Kossuth Lajos","Neumann János","Liszt Ferenc","Bartók Béla","Jókai Mór","Hunyadi Mátyás","Zrínyi Miklós","Szent-Györgyi Albert","Kodály Zoltán","Ady Endre","Arany János","József Attila","Karikó Katalin","Gárdonyi Géza","Munkácsy Mihály","Széchenyi István","Mikszáth Kálmán","Kandó Kálmán","Bolyai János","Dobó István","Toldi Miklós","Rákóczi Ferenc","Szabó Magda","Erkel Ferenc","Madách Imre","Vörösmarty Mihály","Babits Mihály","Kosztolányi Dezső","Radnóti Miklós","Weöres Sándor","Pilinszky János","Örkény István","Esterházy Péter","Kertész Imre","Móricz Zsigmond","Karinthy Frigyes","Fekete István","Bay Zoltán","Gábor Dénes","Szilárd Leó","Teller Ede","Wigner Jenő","Puskás Tivadar","Bíró László","Jedlik Ányos","Eötvös Loránd","Irinyi János","Békésy György","Oláh György","Selye János","Hosszú Katinka","Egerszegi Krisztina","Szilágyi Áron","Kozák Danuta","Kolonics György","Papp László","Albert Flórián","Bozsik József","Hidegkuti Nándor","Kocsis Sándor","Grosics Gyula","Szoboszlai Dominik","Gulácsi Péter","Polgár Judit","Polgár Zsuzsa","Portisch Lajos","Zsivótzky Gyula","Darnyi Tamás","Milák Kristóf","Lehár Ferenc","Kálmán Imre","Cziffra György","Fischer Iván","Presser Gábor","Cserháti Zsuzsa","Koncz Zsuzsa","Demjén Ferenc","Bródy János","Szörényi Levente","Zorán","Máté Péter","Latinovits Zoltán","Darvas Iván","Básti Lajos","Törőcsik Mari","Sinkovits Imre","Kern András","Szabó István","Jancsó Miklós","Fábri Zoltán","Nemes Jeles László","Szent László","Deák Ferenc","Batthyány Lajos","Hunyadi János","Nagy Lajos király","Szent Erzsébet","Árpád fejedelem","Attila","Kinizsi Pál","Dózsa György","Zrínyi Ilona","Sissi","Kármán Tódor","Ganz Ábrahám","Zsolnay Vilmos","Pick Márk","Zwack József","Harry Houdini","Robert Capa","Brassai","Moholy-Nagy László","Vasarely Viktor"] },
+    { id: "filmek", name: "Filmek és sorozatok", ic: "film", c1: "#ff5ca8", c2: "#d91f7a", tk: "#fff", words: ["Star Wars","Harry Potter","Titanic","A Gyűrűk Ura","Jégvarázs","Az oroszlánkirály","Shrek","Szörnyecskék Rt.","Terminátor","Mátrix","Jurassic Park","Forrest Gump","Reszkessetek, betörők!","Vuk","Macskafogó","A Pál utcai fiúk","Valami Amerika","Egri csillagok","A tanú","Üvegtigris","Mézga család","Tüskevár","Friends","Trónok harca","Stranger Things","Breaking Bad","A Simpson család","Spongyabob","Toy Story","Szomszédok","A hobbit","Star Trek","Indiana Jones","James Bond","Rocky","Rambo","Alien","Drágán add az életed","Karib-tenger kalózai","Vissza a jövőbe","Szellemirtók","Gladiátor","Elszabadult pokol","Avatar","Bosszúállók","Batman","Superman","Pókember","Vasember","Joker","Dűne","Oppenheimer","Barbie","Mission: Impossible","Szemfényvesztők","Ocean's Eleven","Pulp Fiction","A Keresztapa","Casablanca","Amélie","Mad Max","Gyalog galopp","Amerikai pite","Kincsem","Sorstalanság","Saul fia","Megáll az idő","Kontroll","Indul a bakterház","A nagy ho-ho-ho horgász","Dallas","Esmeralda","Rex felügyelő","Columbo","Barátok közt","Jóban Rosszban","Született feleségek","Dr. House","Vészhelyzet","Szex és New York","A Mandalóri","The Office","Squid Game","Pénzrablás","Wednesday","Lupin","Bridgerton","A korona","Csernobil","Black Mirror","Sherlock","Doctor Who","South Park","Family Guy","Garfield","Tom és Jerry","Mickey egér","Donald kacsa","Bolondos dallamok","Frédi és Béni","Aladdin","Mulan","Vaiana","Coco","Encanto","Találj rám!","Verdák","Szörny Rt.","Némó nyomában","Agymanók","Up","WALL-E","Ratatouille","Kung Fu Panda","Madagaszkár","Ice Age","Minyonok","Rio","Dzsungel könyve","Szépség és a szörnyeteg","Hamupipőke","Mary Poppins","Zene hangja","Grease","Dirty Dancing","Pretty Woman","Notting Hill","Love Actually","Bridget Jones","Mamma Mia","Titanic"] },
+    { id: "sport", name: "Sport", ic: "ball", c1: "#5b86ff", c2: "#2f50e0", tk: "#fff", words: ["foci","kosárlabda","vízilabda","tenisz","úszás","birkózás","vívás","kajak","kézilabda","jégkorong","műkorcsolya","síelés","tornász","maratoni futás","súlyemelés","ökölvívás","golf","íjászat","lovaglás","evezés","asztalitenisz","röplabda","rögbi","gördeszka","szörf","kerékpár","darts","sakk","Forma 1","magasugrás","távolugrás","rúdugrás","gerelyhajítás","diszkoszvetés","súlylökés","kalapácsvetés","gátfutás","akadályfutás","váltófutás","tízpróba","öttusa","triatlon","gyaloglás","műugrás","szinkronúszás","vitorlázás","kenu","sárkányhajó","hegymászás","sziklamászás","túrázás","görkorcsolya","korcsolya","gyorskorcsolya","curling","szánkó","bob","síugrás","biatlon","snowboard","lesiklás","sífutás","jégtánc","tollaslabda","squash","softball","baseball","krikett","amerikai futball","lacrosse","floorball","strandröplabda","strandfoci","futsal","teqball","padel","kick-box","karate","judo","tekvondo","aikido","MMA","szumó","kendo","lovasugratás","díjlovaglás","galopp","ügetőverseny","motokrossz","motorverseny","rali","gokart","autóverseny","tekézés","bowling","biliárd","snooker","sportlövészet","frizbi","crossfit","aerobik","jóga","pilates","zumba","kocogás","nordic walking","spinning","testépítés","erőemelés","paintball","bungee jumping","ejtőernyőzés","siklóernyőzés","sárkányrepülés","búvárkodás","szabadrúgás","tizenegyes","ziccer","szöglet","les","bedobás","gól","hármas","tie-break","ász","labdaszerzés","félpályás","kapus","csatár","védő","középpályás","játékvezető","bíró","pontszám","mérkőzés","bajnokság","olimpia","világbajnokság","Európa-bajnokság","Tour de France","Wimbledon","Super Bowl","Bajnokok Ligája","Ferencváros","Újpest","Honvéd","MTK","Fradi","Real Madrid","Barcelona","Manchester United","Liverpool","Bayern München"] },
+    { id: "targyak", name: "Tárgyak", ic: "bulb", c1: "#ffd83f", c2: "#ffb000", tk: "#3a2600", dk: 1, words: ["hűtőszekrény","porszívó","esernyő","olló","tükör","kanál","vasaló","zseblámpa","kulcs","szemüveg","ébresztőóra","távirányító","hajszárító","fogkefe","seprű","bögre","párna","takaró","függöny","mosogatógép","kávéfőző","villa","hordozható töltő","mobiltelefon","laptop","hátizsák","bicikli","ceruza","radír","gyertya","kés","tányér","pohár","tálca","lábos","serpenyő","fazék","szita","reszelő","kenyérvágó","fakanál","habverő","nyújtófa","mérleg","palack","konzerv","konzervnyitó","dugóhúzó","termosz","kenyérpirító","mikrohullámú sütő","sütő","tűzhely","mosógép","szárítógép","hajvasaló","borotva","szappan","sampon","törölköző","fürdőkád","WC-papír","fésű","hajkefe","rúzs","parfüm","körömolló","ékszerdoboz","karóra","gyűrű","nyaklánc","karkötő","fülbevaló","sapka","sál","kesztyű","kabát","kalap","öv","nyakkendő","zokni","papucs","csizma","cipőfűző","gomb","cérna","tű","gombostű","varrógép","tolltartó","toll","filctoll","tűzőgép","gemkapocs","ragasztó","hegyező","vonalzó","körző","füzet","könyv","térkép","földgömb","naptár","képeslap","boríték","bélyeg","pénztárca","bankkártya","kulcstartó","lakat","kapucsengő","villanykörte","konnektor","hosszabbító","elem","tévé","rádió","fejhallgató","hangszóró","mikrofon","gitár","zongora","szék","asztal","szekrény","polc","kanapé","fotel","ágy","matrac","lámpa","csillár","szőnyeg","virágcserép","kerti törpe","locsolókanna","ásó","gereblye","kerti slag","létra","kalapács","csavarhúzó","fogó","fűrész","fúró","csavar","szög","vödör","felmosó","lapát","kuka","szatyor","bevásárlókocsi","bőrönd","útlevél","sátor","hálózsák","iránytű","távcső","nagyító","mikroszkóp","gumicsizma","esőkabát","napszemüveg","strandlabda","úszógumi","hógolyó","szánkó","vekker","hőmérő","vérnyomásmérő","tapasz","tabletta","kötszer","inhalátor","mankó","járókeret","tolószék","babakocsi","cumisüveg","csörgő","plüssmaci","építőkocka","kirakó","társasjáték","kártya","dobókocka","sakktábla","labda","hullahopp","ugrókötél","kerékpárpumpa","sisak","térdvédő"] },
+    { id: "cselekvesek", name: "Mutogatós", ic: "mask", c1: "#21dcc4", c2: "#0aa39a", tk: "#fff", words: ["horkol","táncol","úszik","főz","nevet","sír","ásít","fut","tüsszent","fényképez","hegedül","focizik","vasal","zuhanyozik","fogat mos","telefonál","olvas","autót vezet","horgászik","kutyát sétáltat","lépcsőn mászik","esernyőt nyit","csomagol","szúnyogot csap","gitározik","mos","varr","kertészkedik","dobol","bújócskázik","hajat vág","hajat fest","körmöt fest","borotválkozik","sminkel","öltözik","ágyat húz","takarít","port töröl","felmos","kávét főz","kenyeret süt","tésztát gyúr","hagymát vág","forró levest fúj","kiönt","elejt","botlik","elesik","jégen csúszik","korcsolyázik","síel","hógolyózik","hóembert épít","homokvárat épít","napozik","fürdik","búvárkodik","szörfözik","evez","vitorlázik","vadászik","íjat lő","kardot vív","birkózik","bokszol","karatézik","jógázik","nyújtózkodik","ugrál","ugrókötelezik","bukfencezik","kézenáll","mászik","kúszik","hintázik","libikókázik","csúszdázik","biciklizik","rollerezik","gördeszkázik","motorozik","repül","ejtőernyőzik","ugrik","szalutál","integet","tapsol","pacsizik","ölelkezik","puszil","kezet fog","meghajol","térdel","imádkozik","énekel","kiabál","suttog","sikít","morog","vihog","kuncog","mosolyog","grimaszol","kacsint","pislog","szemet forgat","köhög","csuklik","alszik","ébred","szundikál","gondolkodik","álmodik","fél","dühöng","csodálkozik","szomorkodik","örül","udvarol","babát ringat","pelenkáz","etet","lopakodik","nyomoz","kémkedik","menekül","üldöz","robot","zombi","majom","elefánt","pingvin","kígyó","oroszlán","kenguru","béka","tyúk","kutya","macska","szellem","vámpír","boszorkány","szuperhős","kalóz","ninja","cowboy","űrhajós","tündér","sárkány","sellő","dinoszaurusz","hullámzó tenger","vihar","szél","tűz","jég","eső","hóesés","villámlás"] },
+    { id: "mesek", name: "Mesék", ic: "crown", c1: "#8f7bff", c2: "#5a3fe0", tk: "#fff", words: ["Hamupipőke","Piroska és a farkas","Csipkerózsika","Hófehérke","Jancsi és Juliska","Pinokkió","Micimackó","Mazsola","Süsü, a sárkány","A kis hableány","Szépség és a szörnyeteg","Pán Péter","Aladdin","Rumcájsz","Kisvakond","Frakk","Pom Pom","Maci Laci","Mikkamakka","A rút kiskacsa","A három kismalac","Az égig érő paszuly","Csizmás kandúr","János vitéz","Lúdas Matyi","Boszorkány","Tündér","Sárkány","Aranyhaj","Rapunzel","Hüvelyk Matyi","A császár új ruhája","A kis gyufaárus lány","Az ólomkatona","A hókirálynő","A dzsungel könyve","Mowgli","Balu","Bagira","Simba","Nala","Timon és Pumbaa","Mufasa","Scar","Bambi","Dumbo","Dalmata kiskutyák","Cruella","Malacka","Füles","Tigris","Alice Csodaországban","Fehér Nyúl","Mickey","Minnie","Donald","Goofy","Plútó","Tom","Jerry","Hupikék törpikék","Törpapa","Törpilla","Hapci","Szende","Kuka","Tudor","Vidor","Szundi","Morgó","Elza","Anna","Olaf","Kristoff","Sven","Dzsini","Jázmin","Jafar","Sulley","Mike Wazowski","Woody","Buzz Lightyear","Mulan","Pocahontas","Vaiana","Merida","Tiana","Belle","Ariel","Sellő","Óriás","Szörny","Varázsló","Herceg","Hercegnő","Királylány","Királyfi","Kékszakállú","Fehérlófia","Aranyszőrű bárány","Hook kapitány","Tinkerbell","Gru","Minyonok","Shrek","Fiona","Szamár","Lord Farquaad","Piroska","Farkas","Vadász","Nagymama","Mostoha","Jóságos tündér","Gonosz királyné","Tükör, tükör","Varázstükör","Varázspálca","Üvegcipő","Hétmérföldes csizma","Láthatatlanná tévő köpeny","Aranytojást tojó tyúk","Mézeskalács házikó","Béka király"] }
+  ];
+  var ALL = { id: "mind", name: "Minden kategória", ic: "spark", words: [] };
+  var seen = {};
+  CATS.forEach(function (c) {
+    // de-duplicate inside each list
+    var u = [], s = {};
+    c.words.forEach(function (w) { if (!s[w]) { s[w] = 1; u.push(w); } });
+    c.words = u;
+    c.words.forEach(function (w) { if (!seen[w]) { seen[w] = 1; ALL.words.push(w); } });
+  });
+
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { secs: 60, cat: null, deck: [], i: 0, ok: [], skip: [], end: 0, timer: null, phase: "home", wake: null, audio: null, lock: false };
+  try { var s0 = parseInt(localStorage.getItem("fejen-secs"), 10); if ([60, 90, 120].indexOf(s0) >= 0) state.secs = s0; } catch (e) {}
+
+  /* Title letters */
+  (function () {
+    var t = $("ttl"), txt = "Fejen a szó", k = 0;
+    for (var i = 0; i < txt.length; i++) {
+      var sp = document.createElement("span");
+      if (txt[i] === " ") { sp.className = "sp"; sp.innerHTML = "&nbsp;"; } else { sp.className = "t" + (k % 5); k++; sp.textContent = txt[i]; }
+      sp.setAttribute("aria-hidden", "true");
+      t.appendChild(sp);
+    }
+  })();
+
+  function renderTimes() {
+    var box = $("times"); box.innerHTML = "";
+    [60, 90, 120].forEach(function (s) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = s + " mp";
+      b.setAttribute("aria-pressed", state.secs === s ? "true" : "false");
+      b.addEventListener("click", function () {
+        state.secs = s;
+        try { localStorage.setItem("fejen-secs", String(s)); } catch (e) {}
+        renderTimes();
+      });
+      box.appendChild(b);
+    });
+  }
+  function renderCats() {
+    var box = $("cats"); box.innerHTML = "";
+    [ALL].concat(CATS).forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      var isAll = c === ALL;
+      b.className = "tile" + (isAll ? " all dk" : "") + (c.dk ? " dk" : "");
+      if (!isAll) { b.style.setProperty("--c1", c.c1); b.style.setProperty("--c2", c.c2); b.style.setProperty("--tk", c.tk); }
+      else { b.style.setProperty("--tk", "#2a1500"); }
+      var ico = document.createElement("span"); ico.className = "ico"; ico.innerHTML = icon(c.ic);
+      var name = document.createElement("span"); name.className = "name"; name.textContent = c.name;
+      var cnt = document.createElement("span"); cnt.className = "count"; cnt.textContent = c.words.length + " szó";
+      if (isAll) {
+        var txt = document.createElement("span"); txt.className = "txt"; txt.appendChild(name); txt.appendChild(cnt);
+        b.appendChild(ico); b.appendChild(txt);
+      } else { b.appendChild(ico); b.appendChild(name); b.appendChild(cnt); }
+      b.addEventListener("click", function () { start(c); });
+      box.appendChild(b);
+    });
+  }
+
+
+  /* Tilt control */
+  var motion = { on: false, asked: false, armed: false, flip: false, supported: typeof DeviceMotionEvent !== "undefined" };
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  try { motion.flip = localStorage.getItem("fejen-flip") === "1"; } catch (e) {}
+  function renderTilts() {
+    var sec = $("tilt-sec"); if (!motion.supported) return;
+    sec.hidden = false;
+    var box = $("tilts"); box.innerHTML = "";
+    [["Lefelé dőlés = Helyes", false], ["Felfelé dőlés = Helyes", true]].forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = o[0]; b.style.fontSize = "1rem";
+      b.setAttribute("aria-pressed", motion.flip === o[1] ? "true" : "false");
+      b.addEventListener("click", function () {
+        motion.flip = o[1];
+        try { localStorage.setItem("fejen-flip", o[1] ? "1" : "0"); } catch (e) {}
+        renderTilts();
+      });
+      box.appendChild(b);
+    });
+  }
+  function requestMotion() {
+    if (motion.asked || !motion.supported) return;
+    motion.asked = true;
+    try {
+      if (typeof DeviceMotionEvent.requestPermission === "function") {
+        DeviceMotionEvent.requestPermission().then(function (r) { if (r === "granted") enableMotion(); }).catch(function () {});
+      } else { enableMotion(); }
+    } catch (e) {}
+  }
+  function enableMotion() { if (motion.on) return; motion.on = true; window.addEventListener("devicemotion", onMotion); }
+  function onMotion(e) {
+    if (state.phase !== "play" || state.lock) return;
+    var g = e.accelerationIncludingGravity;
+    if (!g || g.z == null) return;
+    var z = g.z / 9.81;
+    if (!isIOS) z = -z;           // Android reports the opposite sign
+    if (motion.flip) z = -z;
+    if (Math.abs(z) < 0.3) { motion.armed = true; return; }   // back to upright: ready for the next word
+    if (!motion.armed) return;
+    if (z > 0.6) { motion.armed = false; mark("ok"); }
+    else if (z < -0.6) { motion.armed = false; mark("skip"); }
+  }
+
+  function beep(freq, dur) {
+    try {
+      if (!state.audio) state.audio = new (window.AudioContext || window.webkitAudioContext)();
+      var ctx = state.audio, o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = freq; o.type = "triangle";
+      g.gain.setValueAtTime(0.16, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime + dur);
+    } catch (e) {}
+  }
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+
+  function showOnly(which) {
+    $("home").hidden = which !== "home";
+    $("results").hidden = which !== "results";
+    $("stage").hidden = which !== "stage";
+    var dc = document.querySelector(".decor"); if (dc) dc.hidden = which === "stage";
+  }
+  function setWord(w) {
+    var el = document.querySelector("#center .word");
+    var fresh = el ? el.cloneNode(false) : null;
+    if (!el) { $("center").innerHTML = '<div class="word"></div>'; el = document.querySelector("#center .word"); }
+    else { $("center").replaceChild(fresh, el); el = fresh; }
+    el.textContent = w;
+    el.className = "word" + (w.length > 22 ? " xlong" : w.length > 13 ? " long" : "");
+  }
+  function nextWord() {
+    if (state.i >= state.deck.length) { state.deck = shuffle(state.cat.words); state.i = 0; }
+    setWord(state.deck[state.i]);
+  }
+
+  function themeStage(cat) {
+    var st = $("stage");
+    if (cat === ALL) {
+      var pick = CATS[Math.floor(Math.random() * CATS.length)];
+      st.style.setProperty("--c1", pick.c1); st.style.setProperty("--c2", pick.c2); st.style.setProperty("--tk", pick.tk);
+    } else {
+      st.style.setProperty("--c1", cat.c1); st.style.setProperty("--c2", cat.c2); st.style.setProperty("--tk", cat.tk);
+    }
+    $("bgicon").innerHTML = icon(cat.ic);
+    $("catname").textContent = cat.name;
+  }
+
+  function start(cat) {
+    state.cat = cat; state.deck = shuffle(cat.words); state.i = 0; state.ok = []; state.skip = []; state.lock = false;
+    state.phase = "count";
+    requestMotion();
+    themeStage(cat);
+    showOnly("stage");
+    $("confetti").hidden = true;
+    $("zones").hidden = true; $("flash").hidden = true;
+    $("time").textContent = state.secs; $("time").className = "time";
+    $("score").textContent = "0";
+    try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { state.wake = l; }, function () {}); } catch (e) {}
+    var n = 3;
+    function tick() {
+      if (state.phase !== "count") return;
+      if (n > 0) {
+        $("center").innerHTML = '<div class="big-count"></div><div class="sub">Tedd a homlokodra!</div>';
+        $("center").querySelector(".big-count").textContent = n;
+        beep(520, 0.15); n--;
+        state.timer = setTimeout(tick, 1000);
+      } else { play(); }
+    }
+    tick();
+  }
+  function play() {
+    state.phase = "play";
+    motion.armed = false;
+    $("zones").hidden = false;
+    $("center").innerHTML = "";
+    beep(880, 0.3);
+    state.end = Date.now() + state.secs * 1000;
+    nextWord();
+    clearInterval(state.timer);
+    state.timer = setInterval(update, 200);
+    update();
+  }
+  function update() {
+    var left = Math.max(0, Math.ceil((state.end - Date.now()) / 1000));
+    var t = $("time");
+    if (t.textContent !== String(left)) {
+      t.textContent = left;
+      if (left <= 10 && left > 0) beep(660, 0.06);
+    }
+    t.className = "time" + (left <= 10 ? " warn" : "");
+    if (left <= 0) finish();
+  }
+  function mark(kind) {
+    if (state.phase !== "play" || state.lock) return;
+    var w = state.deck[state.i];
+    if (kind === "ok") { state.ok.push(w); beep(988, 0.12); setTimeout(function () { beep(1318, 0.14); }, 90); }
+    else { state.skip.push(w); beep(300, 0.18); }
+    $("score").textContent = state.ok.length;
+    state.i++;
+    var f = $("flash");
+    f.className = "flash " + kind;
+    f.textContent = kind === "ok" ? "Helyes!" : "Passz";
+    f.hidden = false;
+    state.lock = true;
+    setTimeout(function () {
+      f.hidden = true; state.lock = false;
+      if (state.phase === "play") nextWord();
+    }, 520);
+  }
+  function releaseWake() { try { if (state.wake) { state.wake.release(); state.wake = null; } } catch (e) {} }
+  function finish() {
+    clearInterval(state.timer); clearTimeout(state.timer);
+    state.phase = "results";
+    beep(440, 0.25); setTimeout(function () { beep(330, 0.35); }, 260);
+    releaseWake();
+    var n = state.ok.length;
+    $("r-cat").textContent = state.cat.name + " · " + state.secs + " mp";
+    $("r-title").textContent = n === 0 ? "Majd legközelebb!" : n < 5 ? "Nem rossz!" : n < 10 ? "Ügyes!" : n < 16 ? "Szuper!" : "Zseniális!";
+    $("r-score").textContent = n;
+    $("r-sub").textContent = n === 1 ? "1 helyes válasz" : n + " helyes válasz";
+    fill($("r-ok"), state.ok); fill($("r-skip"), state.skip);
+    showOnly("results");
+    window.scrollTo(0, 0);
+    if (n > 0) confetti();
+  }
+  function fill(ul, arr) {
+    ul.innerHTML = "";
+    if (!arr.length) { var li = document.createElement("li"); li.className = "empty"; li.textContent = "Nincs"; ul.appendChild(li); return; }
+    arr.forEach(function (w) { var li = document.createElement("li"); li.textContent = w; ul.appendChild(li); });
+  }
+  function goHome() {
+    clearInterval(state.timer); clearTimeout(state.timer);
+    state.phase = "home"; releaseWake();
+    $("confetti").hidden = true;
+    showOnly("home");
+  }
+
+  /* Confetti */
+  function confetti() {
+    try {
+      if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      var cv = $("confetti"); cv.hidden = false;
+      var W = cv.width = window.innerWidth, H = cv.height = window.innerHeight;
+      var ctx = cv.getContext("2d");
+      var cols = ["#ffd83f", "#ff5ca8", "#22cfee", "#34d96a", "#ff5468", "#8f7bff", "#ffa51f"];
+      var ps = [];
+      for (var i = 0; i < 130; i++) ps.push({ x: Math.random() * W, y: -20 - Math.random() * H * 0.5, w: 6 + Math.random() * 8, h: 4 + Math.random() * 6, vx: -1.5 + Math.random() * 3, vy: 2 + Math.random() * 4, r: Math.random() * 6, vr: -.2 + Math.random() * .4, c: cols[i % cols.length] });
+      var t0 = Date.now();
+      (function frame() {
+        var el = Date.now() - t0;
+        ctx.clearRect(0, 0, W, H);
+        ps.forEach(function (p) {
+          p.x += p.vx; p.y += p.vy; p.r += p.vr;
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+        });
+        if (el < 3200 && state.phase === "results") requestAnimationFrame(frame); else { ctx.clearRect(0, 0, W, H); cv.hidden = true; }
+      })();
+    } catch (e) { try { $("confetti").hidden = true; } catch (e2) {} }
+  }
+
+  $("good").addEventListener("click", function () { mark("ok"); });
+  $("pass").addEventListener("click", function () { mark("skip"); });
+  $("quit").addEventListener("click", goHome);
+  $("r-home").addEventListener("click", goHome);
+  $("r-again").addEventListener("click", function () { start(state.cat); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && state.phase === "play" && !state.wake) {
+      try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { state.wake = l; }, function () {}); } catch (e) {}
+    }
+  });
+
+  renderTimes(); renderTilts(); renderCats();
+})();
+</script>
+</body>
+</html>
